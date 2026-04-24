@@ -85,6 +85,9 @@ async def send_media_group(context: ContextTypes.DEFAULT_TYPE):
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     
+    # Регистрация JobQueue
+    application.job_queue.run_once = application.job_queue.run_once # Просто чтобы напомнить себе
+    
     # Слушаем все типы сообщений, кроме команд
     handler = MessageHandler(filters.ALL & ~filters.COMMAND, forward_to_all_channels)
     application.add_handler(handler)

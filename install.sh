@@ -16,12 +16,12 @@ cd channel_forward_bot
 # 3. Запрос данных
 echo "📝 Нам понадобятся ваши ключи API."
 read -p "Введите TELEGRAM_TOKEN: " TELEGRAM_TOKEN < /dev/tty
-read -p "Введите TARGET_CHANNEL_ID (напр., @channel или -100...): " TARGET_CHANNEL_ID < /dev/tty
+read -p "Введите список TARGET_CHANNEL_ID (через запятую, например -1001, -1002): " TARGET_CHANNELS < /dev/tty
 read -p "Введите ALLOWED_USER_ID: " ALLOWED_USER_ID < /dev/tty
 
 cat <<EOF > .env
 TELEGRAM_TOKEN=$TELEGRAM_TOKEN
-TARGET_CHANNEL_ID=$TARGET_CHANNEL_ID
+TARGET_CHANNELS=$TARGET_CHANNELS
 ALLOWED_USER_ID=$ALLOWED_USER_ID
 EOF
 
@@ -38,5 +38,5 @@ docker stop forward-bot 2>/dev/null || true
 docker rm forward-bot 2>/dev/null || true
 docker run --name forward-bot --env-file .env -d --restart unless-stopped forward-bot
 
-echo "🎉 Готово! Бот настроен и запущен."
+echo "🎉 Готово! Бот настроен на рассылку во все указанные каналы."
 echo "Логи: docker logs -f forward-bot"
