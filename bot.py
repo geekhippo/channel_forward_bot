@@ -18,24 +18,30 @@ logging.basicConfig(level=logging.INFO)
 # Однако для стабильности лучше вести список групп.
 
 async def forward_to_all_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # Проверка, что сообщение получено от пользователя
+    if not update.effective_user:
+        return
+
     # Проверка отправителя
     if update.effective_user.id != ALLOWED_USER_ID:
         return
 
-    # В этой версии мы жестко пропишем группы, или будем сканировать обновления.
-    # Так как бот не знает заранее обо всех группах, 
-    # лучше всего, если ты добавишь ID групп в список в .env
-    TARGET_CHANNELS = os.getenv("TARGET_CHANNELS", "").split(",")
+    # Целевые каналы из переменных окружения
+    target_channels = os.getenv("TARGET_CHANNELS", "").split(",")
     
-    for channel_id in TARGET_CHANNELS:
+    for channel_id in target_channels:
+        channel_id = channel_id.strip()
+        if not channel_id:
+            continue
         try:
             await context.bot.copy_message(
-                chat_id=channel_id.strip(),
+                chat_id=channel_id,
                 from_chat_id=update.effective_chat.id,
                 message_id=update.message.message_id
             )
         except Exception as e:
             logging.error(f"Не удалось отправить в {channel_id}: {e}")
+
 
 
 if __name__ == '__main__':
