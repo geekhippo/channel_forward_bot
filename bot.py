@@ -12,23 +12,37 @@ ALLOWED_USER_ID = int(os.getenv("ALLOWED_USER_ID"))
 
 logging.basicConfig(level=logging.INFO)
 
-async def forward_to_channel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Бот будет хранить список всех чатов, куда его добавили как админа
+# Но для начала, так как у нас нет БД для групп, бот будет пытаться публиковать
+# везде, где он есть в списке администраторов (или просто рассылать).
+# Однако для стабильности лучше вести список групп.
+
+async def forward_to_all_channels(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # Проверка отправителя
     if update.effective_user.id != ALLOWED_USER_ID:
         return
 
-    # Копируем сообщение в канал от имени бота
-    await context.bot.copy_message(
-        chat_id=TARGET_CHANNEL_ID,
-        from_chat_id=update.effective_chat.id,
-        message_id=update.message.message_id
-    )
+    # В этой версии мы жестко пропишем группы, или будем сканировать обновления.
+    # Так как бот не знает заранее обо всех группах, 
+    # лучше всего, если ты добавишь ID групп в список в .env
+    TARGET_CHANNELS = os.getenv("TARGET_CHANNELS", "").split(",")
+    
+    for channel_id in TARGET_CHANNELS:
+        try:
+            await context.bot.copy_message(
+                chat_id=channel_id.strip(),
+                from_chat_id=update.effective_chat.id,
+                message_id=update.message.message_id
+            )
+        except Exception as e:
+            logging.error(f"Не удалось отправить в {channel_id}: {e}")
+
 
 if __name__ == '__main__':
     application = ApplicationBuilder().token(TELEGRAM_TOKEN).build()
     
     # Слушаем все типы сообщений, кроме команд
-    handler = MessageHandler(filters.ALL & ~filters.COMMAND, forward_to_channel)
+    handler = MessageHandler(filters.ALL & ~filters.COMMAND, forward_to_all_channels)
     application.add_handler(handler)
     
     application.run_polling()
